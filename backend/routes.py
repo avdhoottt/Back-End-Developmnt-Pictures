@@ -28,27 +28,32 @@ def count():
     return {"message": "Internal server error"}, 500
 
 ######################################################################
-# GET ALL PICTURES
+# GET ALL PICTURES (LIST)
 ######################################################################
 @app.route("/picture", methods=["GET"])
 def get_pictures():
-    """Returns all pictures from the data list"""
+    """
+    List all pictures
+    Returns the data list with HTTP_200_OK
+    """
     return jsonify(data), 200
 
 ######################################################################
-# GET A PICTURE
+# GET A PICTURE (READ)
 ######################################################################
 
 @app.route("/picture/<int:id>", methods=["GET"])
 def get_picture_by_id(id):
     """
-    Retrieve a picture by its ID
+    Read a picture by its ID
+    Returns HTTP_404_NOT_FOUND if not found
+    Returns picture with HTTP_200_OK if found
     """
     for picture in data:
         if picture["id"] == id:
             return jsonify(picture), 200
     
-    return {"message": f"Picture with id {id} not found"}, 404
+    return {"message": "picture not found"}, 404
 
 ######################################################################
 # CREATE A PICTURE
@@ -56,18 +61,20 @@ def get_picture_by_id(id):
 @app.route("/picture", methods=["POST"])
 def create_picture():
     """
-    Creates a new picture
+    Create a new picture
+    Returns HTTP_302_FOUND if picture exists
+    Returns HTTP_201_CREATED if picture created successfully
     """
-    picture = request.get_json()
+    picture_in = request.get_json()
     
-    # Check if picture with given id already exists
-    for existing_picture in data:
-        if existing_picture["id"] == picture["id"]:
-            return {"Message": f"picture with id {picture['id']} already present"}, 302
+    # Check if picture already exists
+    for picture in data:
+        if picture["id"] == picture_in["id"]:
+            return {"Message": f"picture with id {picture_in['id']} already present"}, 302
     
-    # If picture doesn't exist, append it to data
-    data.append(picture)
-    return jsonify(picture), 201
+    # Add new picture
+    data.append(picture_in)
+    return jsonify(picture_in), 201
 
 ######################################################################
 # UPDATE A PICTURE
@@ -77,17 +84,16 @@ def create_picture():
 def update_picture(id):
     """
     Update a picture by its ID
+    Returns HTTP_404_NOT_FOUND if picture not found
+    Returns HTTP_201_CREATED with updated picture if successful
     """
-    # Get the updated picture data from request
     updated_picture = request.get_json()
     
-    # Find and update the picture if it exists
     for i, picture in enumerate(data):
         if picture["id"] == id:
             data[i] = updated_picture
-            return jsonify(updated_picture), 200
+            return jsonify(updated_picture), 201
     
-    # Return 404 if picture not found
     return {"message": "picture not found"}, 404
 
 ######################################################################
@@ -97,6 +103,8 @@ def update_picture(id):
 def delete_picture(id):
     """
     Delete a picture by its ID
+    Returns HTTP_404_NOT_FOUND if picture not found
+    Returns HTTP_204_NO_CONTENT with empty string if successful
     """
     for i, picture in enumerate(data):
         if picture["id"] == id:
